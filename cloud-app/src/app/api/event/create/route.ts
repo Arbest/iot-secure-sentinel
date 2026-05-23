@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     timestamp: input.timestamp,
     value: input.value,
     message: input.message,
+    matrix: input.matrix,
   });
 
   const existing = await Event.findOne({ idempotencyKey }).lean();
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
     type: input.type,
     value: input.value,
     message: input.message,
+    matrix: input.matrix,
     timestamp: eventTimestamp,
     idempotencyKey,
   });

@@ -6,9 +6,10 @@ const eventSchema = new Schema(
     sensorKey: { type: String, required: true, maxlength: 64 },
     type: {
       type: String,
-      enum: ["temperature", "tamper", "heartbeat", "battery"],
+      enum: ["temperature", "tamper", "heartbeat", "battery", "infra_grid"],
       required: true,
     },
+    matrix: { type: [Number] },
     value: { type: Number },
     message: { type: String, maxlength: 500 },
     timestamp: { type: Date, required: true, index: true },

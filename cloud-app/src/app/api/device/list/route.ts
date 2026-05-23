@@ -14,6 +14,12 @@ type LatestReading = {
   timestamp: Date;
 };
 
+type LatestInfraGrid = {
+  _id: unknown;
+  matrix: number[];
+  timestamp: Date;
+};
+
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -48,9 +54,29 @@ export async function GET() {
   ]);
   const temperatureMap = new Map(latestTemperatures.map((t) => [String(t._id), t]));
 
+  const latestInfraGrids = await Event.aggregate<LatestInfraGrid>([
+    {
+      $match: {
+        deviceId: { $in: deviceIds },
+        type: "infra_grid",
+        matrix: { $exists: true, $type: "array" },
+      },
+    },
+    { $sort: { timestamp: -1 } },
+    {
+      $group: {
+        _id: "$deviceId",
+        matrix: { $first: "$matrix" },
+        timestamp: { $first: "$timestamp" },
+      },
+    },
+  ]);
+  const infraGridMap = new Map(latestInfraGrids.map((t) => [String(t._id), t]));
+
   return NextResponse.json({
     items: devices.map((d) => {
       const latestTemperature = temperatureMap.get(String(d._id));
+      const latestInfraGrid = infraGridMap.get(String(d._id));
       return {
         id: String(d._id),
         name: d.name,
@@ -65,6 +91,8 @@ export async function GET() {
         batteryVoltage: d.batteryVoltage ?? null,
         temperatureC: latestTemperature?.value ?? null,
         temperatureAt: latestTemperature?.timestamp ?? null,
+        infraGrid: latestInfraGrid?.matrix ?? null,
+        infraGridAt: latestInfraGrid?.timestamp ?? null,
       };
     }),
   });

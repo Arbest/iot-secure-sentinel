@@ -6,8 +6,9 @@ export const eventCreateSchema = z
   .object({
     deviceName: z.string().min(1).max(120),
     sensorKey: z.string().min(1).max(64),
-    type: z.enum(["temperature", "tamper", "heartbeat", "battery"]),
+    type: z.enum(["temperature", "tamper", "heartbeat", "battery", "infra_grid"]),
     value: z.number().finite().optional(),
+    matrix: z.array(z.number().finite()).length(64).optional(),
     message: z.string().max(500).optional(),
     timestamp: z.string().datetime(),
   })

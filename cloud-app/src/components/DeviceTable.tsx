@@ -1,13 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BatteryLow, Cpu, Router, ServerCrash, Thermometer } from "lucide-react";
+import { BatteryLow, Cpu, Router, ServerCrash, Thermometer, Flame } from "lucide-react";
 import { DevicesSkeleton } from "@/components/DevicesSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { PollIndicator } from "@/components/PollIndicator";
 import { RelativeTime } from "@/components/RelativeTime";
 import { StatusDot } from "@/components/StatusDot";
 import { IconMedallion } from "@/components/ui/IconMedallion";
+import { ThermalCameraModal } from "@/components/ThermalCameraModal";
 import { cn } from "@/lib/utils";
 import { THRESHOLDS } from "@/services/alarm-classifier";
 
@@ -24,6 +26,8 @@ type DeviceRow = {
   batteryVoltage: number | null;
   temperatureC: number | null;
   temperatureAt: string | null;
+  infraGrid: number[] | null;
+  infraGridAt: string | null;
 };
 
 const NO_VALUE = "-";
@@ -36,6 +40,7 @@ async function fetchDevices(): Promise<DeviceRow[]> {
 }
 
 export function DeviceTable() {
+  const [selectedDevice, setSelectedDevice] = useState<DeviceRow | null>(null);
   const query = useQuery({
     queryKey: ["devices"],
     queryFn: fetchDevices,
@@ -43,6 +48,7 @@ export function DeviceTable() {
   });
 
   const items = query.data ?? [];
+  const activeDeviceForCamera = selectedDevice ? items.find(d => d.id === selectedDevice.id) : null;
 
   if (query.isLoading) return <DevicesSkeleton />;
   if (query.isError) {
@@ -121,20 +127,31 @@ export function DeviceTable() {
                       {device.location ?? NO_VALUE}
                     </td>
                     <td className="px-6 py-4 tabular-nums">
-                      {device.temperatureC !== null ? (
-                        <div className="flex flex-col gap-0.5">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1",
-                              temperatureWarning ? "text-warning" : "text-foreground",
-                            )}
-                          >
-                            <Thermometer className="h-4 w-4" aria-hidden="true" />
-                            {device.temperatureC.toFixed(1)} C
-                          </span>
-                          {device.temperatureAt ? (
+                      {device.temperatureC !== null || device.infraGrid ? (
+                        <div className="flex flex-col gap-1">
+                          {device.temperatureC !== null ? (
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1",
+                                temperatureWarning ? "text-warning" : "text-foreground",
+                              )}
+                            >
+                              <Thermometer className="h-4 w-4" aria-hidden="true" />
+                              {device.temperatureC.toFixed(1)} C
+                            </span>
+                          ) : null}
+                          {device.infraGrid ? (
+                            <button
+                              onClick={() => setSelectedDevice(device)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-[10px] font-bold uppercase tracking-wider cursor-pointer w-max transition-colors"
+                            >
+                              <Flame className="h-3 w-3 animate-pulse" />
+                              Termokamera
+                            </button>
+                          ) : null}
+                          {device.temperatureAt || device.infraGridAt ? (
                             <span className="text-xs text-muted-foreground">
-                              <RelativeTime date={device.temperatureAt} />
+                              <RelativeTime date={(device.temperatureAt ?? device.infraGridAt) as string} />
                             </span>
                           ) : null}
                         </div>
@@ -172,6 +189,14 @@ export function DeviceTable() {
             </tbody>
           </table>
         </div>
+      )}
+      {activeDeviceForCamera && (
+        <ThermalCameraModal
+          deviceName={activeDeviceForCamera.name}
+          matrix={activeDeviceForCamera.infraGrid}
+          timestamp={activeDeviceForCamera.infraGridAt}
+          onClose={() => setSelectedDevice(null)}
+        />
       )}
     </div>
   );

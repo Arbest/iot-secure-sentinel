@@ -68,5 +68,24 @@ export function classify(input: EventCreateInput): AlarmDraft | null {
     }
     case "heartbeat":
       return null;
+    case "infra_grid": {
+      if (!input.matrix) return null;
+      const maxVal = Math.max(...input.matrix);
+      if (maxVal >= THRESHOLDS.tempCritHigh) {
+        return {
+          severity: "critical",
+          category: "temperature",
+          message: `Critical temperature of ${maxVal.toFixed(1)} C detected on thermal camera.`,
+        };
+      }
+      if (maxVal >= THRESHOLDS.tempWarnHigh) {
+        return {
+          severity: "warning",
+          category: "temperature",
+          message: `High temperature of ${maxVal.toFixed(1)} C detected on thermal camera.`,
+        };
+      }
+      return null;
+    }
   }
 }

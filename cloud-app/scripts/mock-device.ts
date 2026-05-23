@@ -17,8 +17,9 @@ const INTERVAL_MS = Number(process.env.MOCK_INTERVAL_MS ?? "8000");
 type EventPayload = {
   deviceName: string;
   sensorKey: string;
-  type: "temperature" | "tamper" | "heartbeat" | "battery";
+  type: "temperature" | "tamper" | "heartbeat" | "battery" | "infra_grid";
   value?: number;
+  matrix?: number[];
   message?: string;
   timestamp: string;
 };
@@ -38,7 +39,23 @@ async function postEvent(payload: EventPayload): Promise<void> {
   console.log(`[${payload.type}] ${res.status} ${body}`);
 }
 
-function buildScenario(): EventPayload[] {
+function generateThermalMatrix(step: number): number[] {
+  const matrix: number[] = [];
+  const cx = 3.5 + 2.5 * Math.cos(step * 0.2);
+  const cy = 3.5 + 2.5 * Math.sin(step * 0.2);
+  
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const distSq = (r - cy) ** 2 + (c - cx) ** 2;
+      // Gaussian distribution for heat hotspot
+      const temp = 21.0 + 14.0 * Math.exp(-distSq / 3.0) + Math.random() * 0.3;
+      matrix.push(Number(temp.toFixed(2)));
+    }
+  }
+  return matrix;
+}
+
+function buildScenario(step: number): EventPayload[] {
   const now = new Date();
   return [
     {
@@ -75,6 +92,13 @@ function buildScenario(): EventPayload[] {
       type: "heartbeat",
       timestamp: new Date(now.getTime() + 4000).toISOString(),
     },
+    {
+      deviceName: DEVICE_NAME,
+      sensorKey: "infra-grid-sensor",
+      type: "infra_grid",
+      matrix: generateThermalMatrix(step),
+      timestamp: new Date(now.getTime() + 5000).toISOString(),
+    },
   ];
 }
 
@@ -92,8 +116,9 @@ async function main() {
   process.on("SIGINT", onSignal);
   process.on("SIGTERM", onSignal);
 
+  let step = 0;
   while (!stopRequested) {
-    for (const event of buildScenario()) {
+    for (const event of buildScenario(step)) {
       if (stopRequested) break;
       try {
         await postEvent(event);
@@ -101,6 +126,7 @@ async function main() {
         console.error("[mock-device] error:", err);
       }
     }
+    step++;
     if (stopRequested) break;
     await sleep(INTERVAL_MS);
   }

@@ -59,4 +59,28 @@ describe("eventCreateSchema", () => {
   it("rejects malformed timestamp", () => {
     expect(eventCreateSchema.safeParse({ ...valid, timestamp: "yesterday" }).success).toBe(false);
   });
+
+  it("accepts a valid infra_grid event with 64 elements matrix", () => {
+    const validMatrix = Array.from({ length: 64 }, (_, i) => 20 + i * 0.1);
+    const result = eventCreateSchema.safeParse({
+      deviceName: "node-01",
+      sensorKey: "infra-grid-sensor",
+      type: "infra_grid",
+      matrix: validMatrix,
+      timestamp: new Date().toISOString(),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects infra_grid event with invalid matrix length", () => {
+    const invalidMatrix = Array.from({ length: 63 }, () => 22.5);
+    const result = eventCreateSchema.safeParse({
+      deviceName: "node-01",
+      sensorKey: "infra-grid-sensor",
+      type: "infra_grid",
+      matrix: invalidMatrix,
+      timestamp: new Date().toISOString(),
+    });
+    expect(result.success).toBe(false);
+  });
 });

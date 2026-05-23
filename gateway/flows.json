@@ -337,5 +337,38 @@
     "x": 1640,
     "y": 360,
     "wires": []
+  },
+  {
+    "id": "n1a0b021",
+    "type": "mqtt in",
+    "z": "f1a0b001",
+    "name": "Subscribe to Buffer",
+    "topic": "node/+/buffer",
+    "qos": "0",
+    "datatype": "auto-detect",
+    "broker": "n1a0b013",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 870,
+    "y": 480,
+    "wires": [["n1a0b022"]]
+  },
+  {
+    "id": "n1a0b022",
+    "type": "function",
+    "z": "f1a0b001",
+    "name": "Assemble 8x8 Thermal Grid",
+    "func": "const p = msg.payload;\nif (!p || !Array.isArray(p.buffer)) {\n    return null;\n}\n\nconst buffer = p.buffer;\nif (buffer.length !== 33) {\n    return null; // Expecting 33-byte packet (offset + 32 values)\n}\n\nconst offset = buffer[0]; // 1st byte is offset: 0 or 32\nconst nodeId = msg.topic.split('/')[1] || 'unknown-node';\n\nconst contextKey = `thermal_matrix:${nodeId}`;\nlet matrix = flow.get(contextKey) || new Array(64).fill(0);\nlet receivedFlags = flow.get(`${contextKey}:flags`) || { part1: false, part2: false };\n\nif (offset === 0) {\n    for (let i = 0; i < 32; i++) {\n        matrix[i] = buffer[i + 1] / 2.0;\n    }\n    receivedFlags.part1 = true;\n} else if (offset === 32) {\n    for (let i = 0; i < 32; i++) {\n        matrix[32 + i] = buffer[i + 1] / 2.0;\n    }\n    receivedFlags.part2 = true;\n}\n\nflow.set(contextKey, matrix);\nflow.set(`${contextKey}:flags`, receivedFlags);\n\nif (receivedFlags.part1 && receivedFlags.part2) {\n    flow.set(`${contextKey}:flags`, { part1: false, part2: false });\n\n    const baseUrl = String(env.get('CLOUD_BASE_URL') || flow.get('cloudBaseUrl') || 'http://127.0.0.1:3000').replace(/\\/+$/, '');\n    const token = String(env.get('DEVICE_TOKEN') || flow.get('deviceToken') || 'mock-token-please-rotate');\n    const deviceName = String(env.get('DEVICE_NAME') || flow.get('deviceName') || 'mock-gateway-01');\n\n    msg.url = `${baseUrl}/api/event/create`;\n    msg.headers = {\n        'content-type': 'application/json',\n        authorization: `Bearer ${token}`\n    };\n    msg.payload = {\n        deviceName,\n        sensorKey: 'infra-grid-sensor',\n        type: 'infra_grid',\n        matrix: [...matrix],\n        timestamp: new Date().toISOString()\n    };\n    return msg;\n}\nreturn null;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1150,
+    "y": 480,
+    "wires": [["n1a0b019"]]
   }
 ]

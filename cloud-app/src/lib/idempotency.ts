@@ -17,6 +17,7 @@ export function eventIdempotencyKey(parts: {
   timestamp: string;
   value?: number;
   message?: string;
+  matrix?: number[];
 }): string {
   const fields = [
     parts.deviceId,
@@ -24,6 +25,7 @@ export function eventIdempotencyKey(parts: {
     parts.timestamp,
     parts.value === undefined ? NULL_SENTINEL : String(parts.value),
     parts.message === undefined ? NULL_SENTINEL : parts.message,
+    parts.matrix === undefined ? NULL_SENTINEL : parts.matrix.join(","),
   ];
   return createHash("sha256").update(fields.join(SEP), "utf8").digest("hex");
 }
