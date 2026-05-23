@@ -23,6 +23,7 @@ resource "aws_amplify_app" "iris_gateway" {
                 - export PATH="$HOME/.bun/bin:$PATH"
                 - bun --version
                 - bun install --frozen-lockfile
+                - NODE_ENV=test bun run test
             build:
               commands:
                 - export PATH="$HOME/.bun/bin:$PATH"
@@ -36,6 +37,7 @@ resource "aws_amplify_app" "iris_gateway" {
             paths:
               - node_modules/**/*
               - .next/cache/**/*
+              - $HOME/.cache/mongodb-binaries/**/*
   YAML
 
   custom_rule {
