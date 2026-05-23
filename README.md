@@ -313,5 +313,5 @@ Iteration 2 additions: PIR motion, magnetic door/window contact, smoke sensor, U
   "transport": "radio"
 }
 ```
-
+Test  Hey.
 The gateway resolves `deviceId` to `Device._id` (Mongo ObjectId) before forwarding. Full field semantics in [docs/api_contract.md](docs/api_contract.md).
