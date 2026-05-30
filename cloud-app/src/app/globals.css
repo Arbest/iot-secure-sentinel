@@ -22,19 +22,19 @@
   --color-muted: hsl(255 20% 95%);
   --color-muted-foreground: hsl(255 12% 45%);
 
-  --color-destructive: hsl(0 75% 55%);
+  --color-destructive: hsl(0 75% 42%);
   --color-destructive-foreground: hsl(0 0% 100%);
   --color-destructive-soft: hsl(0 80% 96%);
 
-  --color-warning: hsl(32 95% 50%);
+  --color-warning: hsl(32 95% 35%);
   --color-warning-foreground: hsl(255 25% 12%);
   --color-warning-soft: hsl(38 95% 95%);
 
-  --color-success: hsl(150 65% 40%);
+  --color-success: hsl(150 70% 28%);
   --color-success-foreground: hsl(0 0% 100%);
   --color-success-soft: hsl(150 60% 94%);
 
-  --color-info: hsl(214 90% 50%);
+  --color-info: hsl(214 90% 38%);
   --color-info-foreground: hsl(0 0% 100%);
   --color-info-soft: hsl(214 90% 96%);
 
@@ -130,8 +130,11 @@ body {
   animation: alarm-flash 1.4s ease-out;
 }
 
-/* Reduce motion preference: kill the row flash and the soft pulse. */
+/* Reduce motion preference: silence all animations, including Tailwind built-ins. */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-soft { animation: none; }
   .alarm-flash { animation: none; }
+  .animate-spin { animation: none; }
+  .animate-pulse { animation: none; }
+  .animate-ping { animation: none; }
 }

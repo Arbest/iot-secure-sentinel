@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Bell, Cpu, OctagonAlert, Thermometer } from "lucide-react";
+import Link from "next/link";
+import { Activity, ArrowRight, Cpu, OctagonAlert, Router, Thermometer } from "lucide-react";
 import { PollIndicator } from "@/components/PollIndicator";
 import { RecentActivity } from "@/components/RecentActivity";
 import { StatCard } from "@/components/StatCard";
@@ -16,51 +17,108 @@ async function fetchOverview(): Promise<DashboardOverviewCounts> {
 
 const POLL_INTERVAL_SECONDS = 5;
 
-export function DashboardOverview({ initialCounts }: { initialCounts: DashboardOverviewCounts }) {
+export function DashboardOverview({
+  initialCounts,
+  initialFetchedAt,
+}: {
+  initialCounts: DashboardOverviewCounts;
+  initialFetchedAt: number;
+}) {
   const query = useQuery({
     queryKey: ["dashboard", "overview"],
     queryFn: fetchOverview,
     initialData: initialCounts,
+    initialDataUpdatedAt: initialFetchedAt,
     refetchInterval: POLL_INTERVAL_SECONDS * 1000,
   });
 
   const counts = query.data;
-  const subtitle = buildSubtitle(counts);
   const temperatureWarning =
     counts.latestTemperature !== null &&
     (counts.latestTemperature.value >= THRESHOLDS.tempWarnHigh ||
       counts.latestTemperature.value <= THRESHOLDS.tempWarnLow);
 
+  const gateway = counts.gateway;
+  const gatewayValue = gateway
+    ? gateway.status === "online"
+      ? "Online"
+      : "Offline"
+    : "—";
+  const gatewaySubtitle = gateway
+    ? gateway.lastSeenSeconds != null
+      ? `${gateway.name}, ${formatLastSeen(gateway.lastSeenSeconds)}`
+      : `${gateway.name}, never seen`
+    : "No gateway registered";
+  const gatewayTone =
+    gateway == null
+      ? "neutral"
+      : gateway.status === "online"
+        ? "success"
+        : gateway.status === "warning"
+          ? "warning"
+          : "destructive";
+
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-1">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
-          <PollIndicator
-            intervalSeconds={POLL_INTERVAL_SECONDS}
-            lastUpdated={query.dataUpdatedAt}
-            isFetching={query.isFetching}
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
+        <PollIndicator
+          intervalSeconds={POLL_INTERVAL_SECONDS}
+          lastUpdated={query.dataUpdatedAt}
+          isFetching={query.isFetching}
+          isError={query.isError}
+        />
       </header>
+
+      {counts.alarmsCritical > 0 ? (
+        <Link
+          href="/alarms?severity=critical"
+          className="group flex items-center justify-between gap-4 rounded-xl border border-destructive/30 bg-destructive-soft px-5 py-4 text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-3">
+            <OctagonAlert className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-semibold tracking-tight">
+                {counts.alarmsCritical === 1
+                  ? "1 critical alarm needs an operator"
+                  : `${counts.alarmsCritical} critical alarms need an operator`}
+              </p>
+              <p className="text-xs opacity-80">Click to review and acknowledge</p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </Link>
+      ) : null}
 
       <section aria-label="System health summary" className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Open alarms"
-          icon={Bell}
-          value={counts.alarmsOpen}
-          subtitle={counts.alarmsOpen === 0 ? "Nothing to acknowledge" : "Awaiting acknowledgement"}
-          tone={counts.alarmsOpen > 0 ? "warning" : "success"}
-          href="/alarms"
+          title="Gateway"
+          icon={Router}
+          value={gatewayValue}
+          subtitle={gatewaySubtitle}
+          tone={gatewayTone}
+          href="/devices"
           featured
         />
         <StatCard
-          title="Critical"
+          title="Open alarms"
           icon={OctagonAlert}
-          value={counts.alarmsCritical}
-          subtitle={counts.alarmsCritical === 0 ? "All clear" : "Needs an operator"}
-          tone={counts.alarmsCritical > 0 ? "destructive" : "success"}
+          value={counts.alarmsOpen}
+          subtitle={
+            counts.alarmsCritical > 0
+              ? `${counts.alarmsCritical} critical`
+              : counts.alarmsOpen === 0
+                ? "All clear"
+                : "Awaiting acknowledgement"
+          }
+          tone={
+            counts.alarmsCritical > 0
+              ? "destructive"
+              : counts.alarmsOpen > 0
+                ? "warning"
+                : "success"
+          }
           href="/alarms"
         />
         <StatCard
@@ -74,7 +132,7 @@ export function DashboardOverview({ initialCounts }: { initialCounts: DashboardO
         <StatCard
           title="Temperature"
           icon={Thermometer}
-          value={counts.latestTemperature ? `${counts.latestTemperature.value.toFixed(1)} C` : "-"}
+          value={counts.latestTemperature ? `${counts.latestTemperature.value.toFixed(1)} °C` : "—"}
           subtitle={counts.latestTemperature?.deviceName ?? "No reading yet"}
           tone={temperatureWarning ? "warning" : "neutral"}
           href="/devices"
@@ -85,7 +143,7 @@ export function DashboardOverview({ initialCounts }: { initialCounts: DashboardO
         <StatCard
           title="Events (24h)"
           icon={Activity}
-          value={counts.eventsLast24h}
+          value={counts.eventsLast24h.toLocaleString("en-US")}
           subtitle="Ingested across all devices"
           tone="neutral"
         />
@@ -97,14 +155,9 @@ export function DashboardOverview({ initialCounts }: { initialCounts: DashboardO
   );
 }
 
-function buildSubtitle(counts: DashboardOverviewCounts): string {
-  if (counts.alarmsCritical > 0) {
-    const noun = counts.alarmsCritical === 1 ? "alarm needs" : "alarms need";
-    return `${counts.alarmsCritical} critical ${noun} an operator now.`;
-  }
-  if (counts.alarmsOpen > 0) {
-    const noun = counts.alarmsOpen === 1 ? "alarm is" : "alarms are";
-    return `${counts.alarmsOpen} open ${noun} waiting on acknowledgement.`;
-  }
-  return "No open alarms.";
+function formatLastSeen(seconds: number): string {
+  if (seconds < 60) return `last seen ${seconds}s ago`;
+  if (seconds < 3600) return `last seen ${Math.round(seconds / 60)}m ago`;
+  if (seconds < 86400) return `last seen ${Math.round(seconds / 3600)}h ago`;
+  return `last seen ${Math.round(seconds / 86400)}d ago`;
 }

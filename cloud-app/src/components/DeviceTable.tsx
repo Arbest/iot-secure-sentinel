@@ -72,6 +72,7 @@ export function DeviceTable() {
           intervalSeconds={POLL_INTERVAL_SECONDS}
           lastUpdated={query.dataUpdatedAt}
           isFetching={query.isFetching}
+          isError={query.isError}
         />
       </div>
 
@@ -86,13 +87,13 @@ export function DeviceTable() {
           <table className="w-full min-w-[920px] text-sm">
             <thead className="border-b border-border bg-secondary/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-6 py-3">Device</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3">Location</th>
-                <th className="px-6 py-3">Temperature</th>
-                <th className="px-6 py-3">Battery</th>
-                <th className="px-6 py-3">Firmware</th>
-                <th className="px-6 py-3">Last seen</th>
+                <th scope="col" className="px-6 py-3">Device</th>
+                <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="px-6 py-3">Location</th>
+                <th scope="col" className="px-6 py-3">Temperature</th>
+                <th scope="col" className="px-6 py-3">Battery</th>
+                <th scope="col" className="px-6 py-3">Firmware</th>
+                <th scope="col" className="px-6 py-3">Last seen</th>
               </tr>
             </thead>
             <tbody>
@@ -142,11 +143,14 @@ export function DeviceTable() {
                           ) : null}
                           {device.infraGrid ? (
                             <button
+                              type="button"
                               onClick={() => setSelectedDevice(device)}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-[10px] font-bold uppercase tracking-wider cursor-pointer w-max transition-colors"
+                              aria-label={`Open thermal camera for ${device.name}`}
+                              aria-haspopup="dialog"
+                              className="inline-flex items-center gap-1 rounded border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-max"
                             >
-                              <Flame className="h-3 w-3 animate-pulse" />
-                              Termokamera
+                              <Flame className="h-3 w-3 text-warning" aria-hidden="true" />
+                              Thermal
                             </button>
                           ) : null}
                           {device.temperatureAt || device.infraGridAt ? (

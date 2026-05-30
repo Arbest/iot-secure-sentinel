@@ -15,6 +15,12 @@ export type RecentAlarmSummary = {
   createdAt: string;
 };
 
+export type GatewayStatus = {
+  name: string;
+  status: "online" | "warning" | "offline";
+  lastSeenSeconds: number | null;
+};
+
 export type DashboardOverviewCounts = {
   devicesTotal: number;
   devicesOnline: number;
@@ -27,6 +33,7 @@ export type DashboardOverviewCounts = {
     deviceName: string;
   } | null;
   recentAlarms: RecentAlarmSummary[];
+  gateway: GatewayStatus | null;
 };
 
 const RECENT_ALARMS_LIMIT = 6;
@@ -56,6 +63,24 @@ export async function loadDashboardOverview(): Promise<DashboardOverviewCounts> 
   const devicesOnline = devices.filter(
     (device) => effectiveDeviceStatus(device) === "online",
   ).length;
+
+  const now = Date.now();
+  const gatewayDoc = await Device.findOne({ type: "gateway" })
+    .select("name status lastSeen lastSeenAt")
+    .lean();
+  const gateway: GatewayStatus | null = gatewayDoc
+    ? {
+        name: gatewayDoc.name,
+        status: effectiveDeviceStatus(gatewayDoc),
+        lastSeenSeconds: (() => {
+          const seen = gatewayDoc.lastSeenAt ?? gatewayDoc.lastSeen;
+          if (!seen) return null;
+          const seenMs = seen instanceof Date ? seen.getTime() : new Date(seen).getTime();
+          if (Number.isNaN(seenMs)) return null;
+          return Math.max(0, Math.round((now - seenMs) / 1000));
+        })(),
+      }
+    : null;
 
   const referencedDeviceIds = new Set<string>(
     recentAlarms.map((alarm) => String(alarm.deviceId)),
@@ -94,5 +119,6 @@ export async function loadDashboardOverview(): Promise<DashboardOverviewCounts> 
       deviceName: deviceNameById.get(String(alarm.deviceId)) ?? "Unknown device",
       createdAt: alarm.createdAt.toISOString(),
     })),
+    gateway,
   };
 }

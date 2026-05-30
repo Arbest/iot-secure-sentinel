@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { AlarmTable } from "@/components/AlarmTable";
+
+export const metadata: Metadata = {
+  title: "Alarms",
+};
 
 export default async function AlarmsPage() {
   const session = await auth();
@@ -8,13 +13,7 @@ export default async function AlarmsPage() {
 
   return (
     <div className="space-y-5">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Open alarms</h1>
-        <p className="text-sm text-muted-foreground">
-          Acknowledge alarms once an operator has reviewed them. Acknowledged ones move out of this
-          view.
-        </p>
-      </header>
+      <h1 className="text-2xl font-semibold tracking-tight">Open alarms</h1>
       <Suspense>
         <AlarmTable canAcknowledge={canAcknowledge} />
       </Suspense>

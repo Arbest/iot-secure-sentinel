@@ -133,16 +133,21 @@ export function ThermalCameraModal({
 
   if (!matrix || matrix.length !== 64) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="thermal-modal-title"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      >
         <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-lg font-bold text-foreground">Termokamera</h3>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <h2 id="thermal-modal-title" className="text-lg font-semibold text-foreground">Thermal camera</h2>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close thermal camera">
               <X className="h-4 w-4" />
             </Button>
           </div>
           <div className="py-6 text-center text-muted-foreground">
-            Pro toto zařízení nejsou k dispozici žádná data termokamery.
+            No thermal data available for this device.
           </div>
         </div>
       </div>
@@ -150,16 +155,17 @@ export function ThermalCameraModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="thermal-modal-title"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
+    >
       <div className="w-full max-w-4xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
         {/* Left Side - Visual Grid */}
-        <div className="flex-1 bg-neutral-950 p-6 flex flex-col items-center justify-center relative min-h-[320px] md:min-h-[480px]">
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-semibold text-neutral-400">LIVE</span>
-          </div>
-
-          <div className="relative w-full max-w-[360px] aspect-square rounded-xl overflow-hidden border border-neutral-800 shadow-2xl bg-neutral-900">
+        <div className="flex-1 bg-foreground/95 p-6 flex flex-col items-center justify-center relative min-h-[320px] md:min-h-[480px]">
+          <div className="relative w-full max-w-[360px] aspect-square rounded-xl overflow-hidden border border-background/20 shadow-2xl bg-background/10">
             {/* The heat source visual grid (can be blurred) */}
             <div
               className={cn(
@@ -198,23 +204,17 @@ export function ThermalCameraModal({
                     {/* Extremes Indicators */}
                     {showExtremes && isMax && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                        <div className="relative h-6 w-6 flex items-center justify-center">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60 animate-ping" />
-                          <span className="relative text-[10px] font-black text-black bg-white/95 rounded-full px-1 border border-red-500 shadow-md">
-                            H
-                          </span>
-                        </div>
+                        <span className="relative rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground shadow-md ring-1 ring-background">
+                          H
+                        </span>
                       </div>
                     )}
 
                     {showExtremes && isMin && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                        <div className="relative h-6 w-6 flex items-center justify-center">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60 animate-ping" />
-                          <span className="relative text-[10px] font-black text-white bg-blue-600 rounded-full px-1 border border-blue-400 shadow-md">
-                            L
-                          </span>
-                        </div>
+                        <span className="relative rounded-full bg-info px-1.5 py-0.5 text-[10px] font-bold text-info-foreground shadow-md ring-1 ring-background">
+                          L
+                        </span>
                       </div>
                     )}
 
@@ -231,21 +231,21 @@ export function ThermalCameraModal({
           </div>
 
           {/* Grid interactive readout */}
-          <div className="mt-4 text-xs font-mono text-neutral-400 flex items-center justify-center min-h-[1.5rem] bg-neutral-900/50 px-3 py-1 rounded-md border border-neutral-800">
+          <div className="mt-4 text-xs font-mono flex items-center justify-center min-h-[1.5rem] bg-background/10 px-3 py-1 rounded-md border border-background/20 text-background/70">
             {hoveredIndex !== null ? (
-              <span className="text-white flex items-center gap-2">
-                <span className="text-red-400">Teplota:</span>
-                <span className="text-sm font-semibold">{matrix[hoveredIndex].toFixed(1)} °C</span>
-                <span className="text-neutral-500">|</span>
-                <span className="text-neutral-400">Pixel:</span>
-                <span>
+              <span className="text-background flex items-center gap-2">
+                <span className="text-background/60">Temp:</span>
+                <span className="text-sm font-semibold tabular-nums">{matrix[hoveredIndex].toFixed(1)} °C</span>
+                <span className="text-background/40">|</span>
+                <span className="text-background/60">Cell:</span>
+                <span className="tabular-nums">
                   [{Math.floor(hoveredIndex / 8) + 1}, {(hoveredIndex % 8) + 1}]
                 </span>
               </span>
             ) : (
-              <span className="text-neutral-500 flex items-center gap-1.5">
-                <Maximize2 className="h-3 w-3" />
-                Najeďte myší na mřížku pro detailní odečet
+              <span className="flex items-center gap-1.5">
+                <Maximize2 className="h-3 w-3" aria-hidden="true" />
+                Hover the grid for per-cell readout
               </span>
             )}
           </div>
@@ -257,16 +257,17 @@ export function ThermalCameraModal({
           <div>
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-red-500" />
-                  Termokamera
-                </h3>
+                <h2 id="thermal-modal-title" className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-destructive" aria-hidden="true" />
+                  Thermal camera
+                </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 font-mono">{deviceName}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
+                aria-label="Close thermal camera"
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
@@ -275,9 +276,9 @@ export function ThermalCameraModal({
 
             {/* Timestamp */}
             <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-              <span>Snímek pořízen:</span>
+              <span>Captured:</span>
               <span className="font-mono text-foreground">
-                {timestamp ? new Date(timestamp).toLocaleTimeString() : "Neznámý čas"}
+                {timestamp ? new Date(timestamp).toLocaleTimeString() : "Unknown"}
               </span>
             </div>
 
@@ -285,41 +286,41 @@ export function ThermalCameraModal({
 
             {/* Statistics */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Compass className="h-3.5 w-3.5" />
-                Statistika snímku
-              </h4>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Compass className="h-3.5 w-3.5" aria-hidden="true" />
+                Frame statistics
+              </h3>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="bg-secondary/40 p-2.5 rounded-lg border border-border">
                   <div className="text-[10px] text-muted-foreground font-medium uppercase">Maximum</div>
-                  <div className="text-lg font-bold text-red-500 tabular-nums">
+                  <div className="text-lg font-semibold text-destructive tabular-nums">
                     {stats.max.toFixed(1)} °C
                   </div>
                   <div className="text-[9px] font-mono text-muted-foreground">
-                    Pixel [{Math.floor(stats.maxIdx / 8) + 1}, {(stats.maxIdx % 8) + 1}]
+                    Cell [{Math.floor(stats.maxIdx / 8) + 1}, {(stats.maxIdx % 8) + 1}]
                   </div>
                 </div>
 
                 <div className="bg-secondary/40 p-2.5 rounded-lg border border-border">
                   <div className="text-[10px] text-muted-foreground font-medium uppercase">Minimum</div>
-                  <div className="text-lg font-bold text-blue-500 tabular-nums">
+                  <div className="text-lg font-semibold text-info tabular-nums">
                     {stats.min.toFixed(1)} °C
                   </div>
                   <div className="text-[9px] font-mono text-muted-foreground">
-                    Pixel [{Math.floor(stats.minIdx / 8) + 1}, {(stats.minIdx % 8) + 1}]
+                    Cell [{Math.floor(stats.minIdx / 8) + 1}, {(stats.minIdx % 8) + 1}]
                   </div>
                 </div>
 
                 <div className="bg-secondary/40 p-2.5 rounded-lg border border-border">
-                  <div className="text-[10px] text-muted-foreground font-medium uppercase">Průměr</div>
-                  <div className="text-lg font-bold text-foreground tabular-nums">
+                  <div className="text-[10px] text-muted-foreground font-medium uppercase">Average</div>
+                  <div className="text-lg font-semibold text-foreground tabular-nums">
                     {stats.avg.toFixed(1)} °C
                   </div>
                 </div>
 
                 <div className="bg-secondary/40 p-2.5 rounded-lg border border-border">
-                  <div className="text-[10px] text-muted-foreground font-medium uppercase">Rozdíl (Δ)</div>
-                  <div className="text-lg font-bold text-orange-500 tabular-nums">
+                  <div className="text-[10px] text-muted-foreground font-medium uppercase">Δ Range</div>
+                  <div className="text-lg font-semibold text-warning tabular-nums">
                     {(stats.max - stats.min).toFixed(1)} °C
                   </div>
                 </div>
@@ -330,18 +331,18 @@ export function ThermalCameraModal({
 
             {/* Display Controls */}
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Sliders className="h-3.5 w-3.5" />
-                Nastavení zobrazení
-              </h4>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Sliders className="h-3.5 w-3.5" aria-hidden="true" />
+                Display
+              </h3>
 
               {/* Palette Selection */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Layers className="h-3 w-3" />
-                  Barevná paleta
+                <label htmlFor="thermal-palette" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                  <Layers className="h-3 w-3" aria-hidden="true" />
+                  Color palette
                 </label>
-                <div className="grid grid-cols-3 gap-1 bg-secondary/30 p-0.5 rounded-lg border border-border">
+                <div id="thermal-palette" role="radiogroup" aria-label="Color palette" className="grid grid-cols-3 gap-1 bg-secondary/30 p-0.5 rounded-lg border border-border">
                   {[
                     { id: "ironbow", name: "Ironbow" },
                     { id: "rainbow", name: "Rainbow" },
@@ -349,9 +350,12 @@ export function ThermalCameraModal({
                   ].map((p) => (
                     <button
                       key={p.id}
+                      role="radio"
+                      aria-checked={palette === p.id}
                       onClick={() => setPalette(p.id)}
                       className={cn(
                         "text-[11px] py-1 px-1.5 rounded-md font-medium transition-all",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         palette === p.id
                           ? "bg-card text-foreground shadow-sm border border-border"
                           : "text-muted-foreground hover:text-foreground"
@@ -365,11 +369,10 @@ export function ThermalCameraModal({
 
               {/* Toggles */}
               <div className="space-y-2 pt-1">
-                {/* Smoothing Toggle */}
                 <label className="flex items-center justify-between p-2 rounded-lg bg-secondary/20 hover:bg-secondary/40 border border-border/50 cursor-pointer transition-colors">
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Vyhlazení obrazu</span>
-                    <span className="text-[10px] text-muted-foreground">Interpolace tepelné mapy</span>
+                    <span className="text-xs font-semibold text-foreground">Smoothing</span>
+                    <span className="text-[10px] text-muted-foreground">Interpolate heat map</span>
                   </div>
                   <input
                     type="checkbox"
@@ -379,11 +382,10 @@ export function ThermalCameraModal({
                   />
                 </label>
 
-                {/* Values Overlay Toggle */}
                 <label className="flex items-center justify-between p-2 rounded-lg bg-secondary/20 hover:bg-secondary/40 border border-border/50 cursor-pointer transition-colors">
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Zobrazit teploty</span>
-                    <span className="text-[10px] text-muted-foreground">Číselné hodnoty v mřížce</span>
+                    <span className="text-xs font-semibold text-foreground">Show values</span>
+                    <span className="text-[10px] text-muted-foreground">Numeric overlay per cell</span>
                   </div>
                   <input
                     type="checkbox"
@@ -393,11 +395,10 @@ export function ThermalCameraModal({
                   />
                 </label>
 
-                {/* Extremes Highlight Toggle */}
                 <label className="flex items-center justify-between p-2 rounded-lg bg-secondary/20 hover:bg-secondary/40 border border-border/50 cursor-pointer transition-colors">
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Zobrazit extrémy</span>
-                    <span className="text-[10px] text-muted-foreground">Zvýraznit min / max bod</span>
+                    <span className="text-xs font-semibold text-foreground">Show extremes</span>
+                    <span className="text-[10px] text-muted-foreground">Mark min and max cells</span>
                   </div>
                   <input
                     type="checkbox"
@@ -413,7 +414,7 @@ export function ThermalCameraModal({
           {/* Footer Close Button */}
           <div className="mt-6">
             <Button className="w-full" variant="outline" onClick={onClose}>
-              Zavřít termokameru
+              Close
             </Button>
           </div>
         </div>

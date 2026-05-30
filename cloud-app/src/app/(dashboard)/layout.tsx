@@ -13,6 +13,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-3">
           <Logo />
@@ -36,7 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
         <DashboardNav variant="mobile" />
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-6 py-8 focus:outline-none">{children}</main>
     </div>
   );
 }

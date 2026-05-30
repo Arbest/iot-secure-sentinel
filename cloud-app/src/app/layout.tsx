@@ -12,7 +12,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Iris Gateway",
+  title: {
+    template: "%s · Iris Gateway",
+    default: "Iris Gateway",
+  },
   description: "Cloud console for the Iris Gateway IoT system.",
 };
 

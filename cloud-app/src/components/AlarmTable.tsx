@@ -198,6 +198,7 @@ export function AlarmTable({ canAcknowledge }: { canAcknowledge: boolean }) {
           intervalSeconds={POLL_INTERVAL_SECONDS}
           lastUpdated={query.dataUpdatedAt}
           isFetching={query.isFetching}
+          isError={query.isError}
         />
       </div>
 
@@ -222,12 +223,12 @@ export function AlarmTable({ canAcknowledge }: { canAcknowledge: boolean }) {
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-secondary/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-6 py-3">Severity</th>
-                <th className="px-6 py-3">Device</th>
-                <th className="px-6 py-3">Category</th>
-                <th className="px-6 py-3">Message</th>
-                <th className="px-6 py-3">When</th>
-                <th className="px-6 py-3 text-right">Action</th>
+                <th scope="col" className="px-6 py-3">Severity</th>
+                <th scope="col" className="px-6 py-3">Device</th>
+                <th scope="col" className="px-6 py-3">Category</th>
+                <th scope="col" className="px-6 py-3">Message</th>
+                <th scope="col" className="px-6 py-3">When</th>
+                <th scope="col" className="px-6 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody>

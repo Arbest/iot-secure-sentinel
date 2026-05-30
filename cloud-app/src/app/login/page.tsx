@@ -3,7 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bell, Cpu, KeyRound, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, Mail } from "lucide-react";
 import { LogoMark } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,12 +43,7 @@ function LoginForm() {
         <LogoMark className="h-9 w-9" />
         <span className="text-xl font-semibold tracking-tight">Iris Gateway</span>
       </div>
-      <div className="space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-sm text-muted-foreground">
-          Watch alarms from your gateway and acknowledge them once an operator has reviewed.
-        </p>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-medium">
@@ -123,57 +118,14 @@ function LoginForm() {
   );
 }
 
-const HIGHLIGHTS = [
-  {
-    icon: Bell,
-    title: "Sub-5s alarm latency",
-    body: "Open alarms appear here as soon as the gateway forwards an event from the Core Module.",
-  },
-  {
-    icon: Cpu,
-    title: "Tamper and temperature sensors",
-    body: "Built around the HARDWARIO Core Module talking to a Raspberry Pi gateway over MQTT.",
-  },
-  {
-    icon: KeyRound,
-    title: "Per-device bearer tokens",
-    body: "Each gateway and sensor node carries its own scoped token, hashed with SHA-256 at rest.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Argon2id operator passwords",
-    body: "Memory-hard hashing for human accounts, separate from device authentication.",
-  },
-];
-
 function BrandPanel() {
   return (
     <div className="iris-mesh relative hidden h-full flex-col justify-between overflow-hidden p-12 text-white lg:flex">
       <div className="flex items-center gap-3">
-        <LogoMark className="h-8 w-8" />
-        <span className="text-lg font-semibold tracking-tight">Iris Gateway</span>
+        <LogoMark className="h-9 w-9" />
+        <span className="text-xl font-semibold tracking-tight">Iris Gateway</span>
       </div>
-      <div className="space-y-8">
-        <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight">
-          Iris keeps an eye on the gateway, so an operator can stay on the floor.
-        </h2>
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {HIGHLIGHTS.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="flex gap-3">
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                <Icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-semibold">{title}</p>
-                <p className="text-sm text-white/75">{body}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="text-xs text-white/60">
-        iris-gateway.cz, built for HARDWARIO Core Module on a Raspberry Pi gateway
-      </p>
+      <p className="font-mono text-xs text-white/50">Operator console</p>
     </div>
   );
 }

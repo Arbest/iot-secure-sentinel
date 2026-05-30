@@ -33,13 +33,15 @@ export function StatCard({
         featured && "ring-1 ring-inset ring-primary/15",
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r",
-          style.bar,
-        )}
-      />
+      {featured ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r",
+            style.bar,
+          )}
+        />
+      ) : null}
       <CardHeader className="flex-row items-start justify-between gap-2 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <IconMedallion icon={icon} tone={tone} size={featured ? "md" : "sm"} />
@@ -57,10 +59,10 @@ export function StatCard({
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">{subtitle}</span>
           {href ? (
-            <span className="inline-flex items-center gap-0.5 font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-              Open
-              <ArrowUpRight className="h-3 w-3" />
-            </span>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary group-focus-visible:text-primary"
+            />
           ) : null}
         </div>
       </CardContent>
