@@ -54,7 +54,7 @@ variable "seed_admin_password" {
 }
 
 variable "seed_device_token" {
-  description = "Bearer token used by the mock gateway device. Hashed before storage. Refusing to seed without this in production."
+  description = "Bearer token used by the seeded gateway device. Hashed before storage. Refusing to seed without this in production."
   type        = string
   sensitive   = true
   validation {
@@ -64,7 +64,7 @@ variable "seed_device_token" {
 }
 
 variable "seed_device_name" {
-  description = "Name of the seeded mock gateway device. Used to look it up after first connect."
+  description = "Name of the seeded gateway device. Used to look it up after first connect."
   type        = string
   default     = "iris-gateway-prod"
 }

@@ -107,7 +107,7 @@ openssl rand -base64 32
 By default the first request boots an in-memory MongoDB and seeds:
 
 - admin `admin@iris.local` / `admin123` (override via `SEED_ADMIN_*`)
-- mock gateway device `mock-gateway-01` with token `mock-token-please-rotate`
+- gateway device `iris-gateway-dev` with token `dev-token-please-rotate` (override via `SEED_DEVICE_*`)
 
 Production refuses defaults and requires `MONGODB_URI`, `SEED_ADMIN_PASSWORD`, `SEED_DEVICE_TOKEN`.
 
@@ -116,9 +116,9 @@ bun run test       # vitest, 95 tests
 bun run build      # next build
 ```
 
-## Demo without hardware
+## Local simulator (no hardware)
 
-Two terminals:
+The real gateway is a HARDWARIO Core Module on a Raspberry Pi running Node-RED (see [docs/raspberry-pi-gateway-setup.md](docs/raspberry-pi-gateway-setup.md)). For development without the rig, `scripts/mock-device.ts` replays a scripted scenario against the same `/api/event/create` endpoint:
 
 ```bash
 # T1
@@ -128,7 +128,7 @@ bun dev
 bun run mock-device
 ```
 
-Mock device POSTs scenario `temperature normal -> tamper -> temperature critical -> battery critical -> heartbeat` on a loop. Dashboard updates via polling.
+The simulator POSTs `temperature normal -> tamper -> temperature critical -> battery critical -> heartbeat` on a loop. Dashboard updates via polling.
 
 ## Endpoints
 
@@ -255,8 +255,8 @@ Set these for the Node-RED process:
 
 ```bash
 CLOUD_BASE_URL=http://<notebook-ip>:3000     # or https://iris-gateway.cz for prod
-DEVICE_NAME=mock-gateway-01
-DEVICE_TOKEN=mock-token-please-rotate
+DEVICE_NAME=iris-gateway-dev
+DEVICE_TOKEN=dev-token-please-rotate
 ```
 
 For the systemd service from [docs/deployment.md](docs/deployment.md):

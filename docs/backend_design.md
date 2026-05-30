@@ -719,7 +719,7 @@ The middleware (`cloud-app/src/lib/device-auth.ts`):
 3. If match, returns the device document; the route handler then assigns `DEVICE`-role behavior for authorization.
 4. Updates `device.lastSeen` (debounced; the MVP updates it on every event/create call).
 
-The token is issued once at `device/register` and stored only as SHA-256 hash. Loss requires re-registration. (`device/register` itself is iteration 2; the MVP seeds a mock gateway with a known token at first boot via `cloud-app/src/lib/seed.ts`.)
+The token is issued once at `device/register` and stored only as SHA-256 hash. Loss requires re-registration. (`device/register` itself is iteration 2; the MVP seeds a gateway with a known token at first boot via `cloud-app/src/lib/seed.ts`.)
 
 ### Authorization (role matrix)
 

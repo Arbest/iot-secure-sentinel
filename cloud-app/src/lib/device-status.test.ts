@@ -9,7 +9,7 @@ describe("device status helpers", () => {
   it("detects online heartbeat events", () => {
     expect(
       isOnlineHeartbeatEvent({
-        deviceName: "mock-gateway-01",
+        deviceName: "iris-gateway-test",
         sensorKey: "core-heartbeat",
         type: "heartbeat",
         value: 1,
@@ -23,7 +23,7 @@ describe("device status helpers", () => {
 
     expect(
       isOfflineStatusEvent({
-        deviceName: "mock-gateway-01",
+        deviceName: "iris-gateway-test",
         sensorKey: "push-button:0-status",
         type: "tamper",
         value: 0,
@@ -32,7 +32,7 @@ describe("device status helpers", () => {
     ).toBe(true);
     expect(
       isOfflineStatusEvent({
-        deviceName: "mock-gateway-01",
+        deviceName: "iris-gateway-test",
         sensorKey: "push-button:0-status",
         type: "tamper",
         value: 1,

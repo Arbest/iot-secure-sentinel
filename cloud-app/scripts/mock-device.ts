@@ -10,8 +10,8 @@
  */
 
 const BASE_URL = process.env.MOCK_BASE_URL ?? "http://localhost:3000";
-const DEVICE_NAME = process.env.SEED_DEVICE_NAME ?? "mock-gateway-01";
-const TOKEN = process.env.SEED_DEVICE_TOKEN ?? "mock-token-please-rotate";
+const DEVICE_NAME = process.env.SEED_DEVICE_NAME ?? "iris-gateway-dev";
+const TOKEN = process.env.SEED_DEVICE_TOKEN ?? "dev-token-please-rotate";
 const INTERVAL_MS = Number(process.env.MOCK_INTERVAL_MS ?? "8000");
 
 type EventPayload = {

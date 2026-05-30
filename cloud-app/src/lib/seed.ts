@@ -4,8 +4,8 @@ import { hashPassword, hashDeviceToken } from "./password";
 
 const DEFAULT_ADMIN_EMAIL = "admin@iris.local";
 const DEFAULT_ADMIN_PASSWORD = "admin123";
-const DEFAULT_DEVICE_NAME = "mock-gateway-01";
-const DEFAULT_DEVICE_TOKEN = "mock-token-please-rotate";
+const DEFAULT_DEVICE_NAME = "iris-gateway-dev";
+const DEFAULT_DEVICE_TOKEN = "dev-token-please-rotate";
 
 export async function runSeed() {
   const isProd = process.env.NODE_ENV === "production";
@@ -44,8 +44,8 @@ export async function runSeed() {
       status: "offline",
       location: "Lab bench",
       apiTokenHash: hashDeviceToken(deviceToken),
-      firmwareVersion: "0.1.0-mock",
+      firmwareVersion: "0.1.0",
     });
-    console.info(`[seed] created mock gateway: ${deviceName}`);
+    console.info(`[seed] created gateway device: ${deviceName}`);
   }
 }
