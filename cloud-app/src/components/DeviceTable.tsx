@@ -154,18 +154,25 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[1080px] text-sm">
+          {/*
+            Per-column widths sum to ~1320px. Without them the table flexes every
+            column to natural content width, which collapses "iris-gateway-prod"
+            into a three-line wrap and makes the leading icon look undersized.
+            Explicit widths reserve room for the widest expected content per
+            column so a single device row stays one line.
+          */}
+          <table className="w-full min-w-[1320px] text-sm">
             <thead className="border-b border-border bg-secondary/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th scope="col" className="px-6 py-3">Device</th>
-                <th scope="col" className="px-6 py-3">Status</th>
-                <th scope="col" className="px-6 py-3">Armed</th>
-                <th scope="col" className="px-6 py-3">Location</th>
-                <th scope="col" className="px-6 py-3">Temperature</th>
-                <th scope="col" className="px-6 py-3">Battery</th>
-                <th scope="col" className="px-6 py-3">Firmware</th>
+                <th scope="col" className="w-[260px] px-6 py-3">Device</th>
+                <th scope="col" className="w-[120px] px-6 py-3">Status</th>
+                <th scope="col" className="w-[130px] px-6 py-3">Armed</th>
+                <th scope="col" className="w-[150px] px-6 py-3">Location</th>
+                <th scope="col" className="w-[170px] px-6 py-3">Temperature</th>
+                <th scope="col" className="w-[110px] px-6 py-3">Battery</th>
+                <th scope="col" className="w-[140px] px-6 py-3">Firmware</th>
                 <th scope="col" className="w-44 px-6 py-3">Last seen</th>
-                <th scope="col" className="px-6 py-3 text-right">Actions</th>
+                <th scope="col" className="w-[200px] px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -189,8 +196,12 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <IconMedallion icon={Icon} tone="primary" size="md" />
-                        <div>
-                          <div className="font-medium">{device.name}</div>
+                        {/* min-w-0 lets the truncating child shrink within the flex parent;
+                            without it the inner div keeps its natural width and overflows. */}
+                        <div className="min-w-0">
+                          <div className="truncate font-medium" title={device.name}>
+                            {device.name}
+                          </div>
                           <div className="text-xs capitalize text-muted-foreground">
                             {device.type === "iotNode" ? "IoT node" : "Gateway"}
                           </div>
@@ -203,7 +214,7 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                     <td className="px-6 py-4">
                       <ArmedBadge armed={device.armed} />
                     </td>
-                    <td className="px-6 py-4 text-muted-foreground">
+                    <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
                       {device.location ?? NO_VALUE}
                     </td>
                     <td className="px-6 py-4 tabular-nums">
@@ -242,7 +253,7 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                         <span className="text-muted-foreground">{NO_VALUE}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 tabular-nums">
+                    <td className="whitespace-nowrap px-6 py-4 tabular-nums">
                       {device.batteryVoltage !== null ? (
                         <span
                           className={cn(
@@ -263,7 +274,7 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                         <span className="text-muted-foreground">{NO_VALUE}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-muted-foreground">
                       {device.firmwareVersion ?? NO_VALUE}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-xs text-muted-foreground">
