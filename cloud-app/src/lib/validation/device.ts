@@ -22,3 +22,12 @@ export const deviceDeleteSchema = z
   .strict();
 
 export type DeviceDeleteInput = z.infer<typeof deviceDeleteSchema>;
+
+export const deviceSetArmedSchema = z
+  .object({
+    deviceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "deviceId must be a Mongo ObjectId"),
+    armed: z.boolean(),
+  })
+  .strict();
+
+export type DeviceSetArmedInput = z.infer<typeof deviceSetArmedSchema>;

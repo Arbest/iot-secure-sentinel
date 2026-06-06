@@ -79,7 +79,11 @@ export async function POST(req: NextRequest) {
   }
   await device.save();
 
-  const draft = classify(input);
+  // Telemetry and device state above are always persisted. Alarm classification
+  // is gated on the arm state: a disarmed device keeps reporting fresh data but
+  // raises no alarms. The offline heartbeat sweep is gated separately, in
+  // ensureOfflineTamperAlarms.
+  const draft = device.armed ? classify(input) : null;
   let alarmId: string | undefined;
   if (draft) {
     const alarm = await Alarm.create({

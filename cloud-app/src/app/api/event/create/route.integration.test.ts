@@ -52,6 +52,9 @@ beforeEach(async () => {
     name: DEVICE_NAME,
     type: "gateway",
     status: "offline",
+    // Armed by default so the positive cases below exercise the alarm-raising
+    // path. The disarmed-gate cases override this field explicitly.
+    armed: true,
     apiTokenHash: hashDeviceToken(DEVICE_TOKEN),
   });
 });

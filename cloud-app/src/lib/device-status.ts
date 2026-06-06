@@ -53,7 +53,12 @@ export function effectiveDeviceStatus(device: DeviceStatusFields, now = new Date
 
 export async function ensureOfflineTamperAlarms(now = new Date()) {
   const cutoff = new Date(now.getTime() - offlineTimeoutMs());
+  // Only armed devices raise offline/heartbeat-missing alarms. Disarmed devices
+  // (armed false or, for legacy rows, the field absent) are skipped entirely:
+  // they still read as offline via effectiveDeviceStatus, but no alarm is opened
+  // and their status is not force-persisted here.
   const staleOrOfflineDevices = await Device.find({
+    armed: true,
     $or: [
       { status: "offline", lastSeenAt: { $exists: true } },
       { status: "offline", lastSeen: { $exists: true } },

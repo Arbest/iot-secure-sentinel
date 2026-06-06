@@ -9,10 +9,13 @@ import {
   Plus,
   Router,
   ServerCrash,
+  ShieldCheck,
+  ShieldOff,
   Thermometer,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ArmedBadge } from "@/components/ArmedBadge";
 import { ConfirmDeleteDeviceDialog } from "@/components/ConfirmDeleteDeviceDialog";
 import { DevicesSkeleton } from "@/components/DevicesSkeleton";
 import { EmptyState } from "@/components/EmptyState";
@@ -25,32 +28,17 @@ import { IconMedallion } from "@/components/ui/IconMedallion";
 import { ThermalCameraModal } from "@/components/ThermalCameraModal";
 import { cn } from "@/lib/utils";
 import { extractUuAppErrorMessage } from "@/lib/uu-error";
-import { type DeviceType } from "@/lib/validation/device";
 import { THRESHOLDS } from "@/services/alarm-classifier";
+import type { DeviceListItem } from "@/types/device";
 
 const POLL_INTERVAL_SECONDS = 10;
 
-type DeviceRow = {
-  id: string;
-  name: string;
-  type: DeviceType;
-  status: "online" | "warning" | "offline";
-  location: string | null;
-  lastSeen: string | null;
-  firmwareVersion: string | null;
-  batteryVoltage: number | null;
-  temperatureC: number | null;
-  temperatureAt: string | null;
-  infraGrid: number[] | null;
-  infraGridAt: string | null;
-};
-
 const NO_VALUE = "-";
 
-async function fetchDevices(): Promise<DeviceRow[]> {
+async function fetchDevices(): Promise<DeviceListItem[]> {
   const res = await fetch("/api/device/list", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load devices");
-  const data = (await res.json()) as { items: DeviceRow[] };
+  const data = (await res.json()) as { items: DeviceListItem[] };
   return data.items;
 }
 
@@ -67,11 +55,26 @@ async function deleteDevice(deviceId: string): Promise<void> {
   }
 }
 
-export function DeviceTable() {
+type SetArmedInput = { deviceId: string; armed: boolean };
+
+async function setArmedDevice({ deviceId, armed }: SetArmedInput): Promise<void> {
+  const res = await fetch("/api/device/set-armed", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ deviceId, armed }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const message = extractUuAppErrorMessage(body) ?? "Failed to update device.";
+    throw new Error(message);
+  }
+}
+
+export function DeviceTable({ canManageDevices }: { canManageDevices: boolean }) {
   const queryClient = useQueryClient();
-  const [selectedDevice, setSelectedDevice] = useState<DeviceRow | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
   const [showRegister, setShowRegister] = useState(false);
-  const [deleteCandidate, setDeleteCandidate] = useState<DeviceRow | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<DeviceListItem | null>(null);
 
   const query = useQuery({
     queryKey: ["devices"],
@@ -85,6 +88,17 @@ export function DeviceTable() {
       toast.success("Device removed.");
       queryClient.invalidateQueries({ queryKey: ["devices"] });
       setDeleteCandidate(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const setArmed = useMutation({
+    mutationFn: setArmedDevice,
+    onSuccess: (_data, variables) => {
+      toast.success(variables.armed ? "Device armed." : "Device disarmed.");
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -119,10 +133,12 @@ export function DeviceTable() {
             isFetching={query.isFetching}
             isError={query.isError}
           />
-          <Button size="sm" onClick={() => setShowRegister(true)}>
-            <Plus aria-hidden="true" />
-            Register device
-          </Button>
+          {canManageDevices && (
+            <Button size="sm" onClick={() => setShowRegister(true)}>
+              <Plus aria-hidden="true" />
+              Register device
+            </Button>
+          )}
         </div>
       </div>
 
@@ -130,15 +146,20 @@ export function DeviceTable() {
         <EmptyState
           icon={Cpu}
           title="No devices registered yet"
-          description="Register a device with the button above to start receiving its events."
+          description={
+            canManageDevices
+              ? "Register a device with the button above to start receiving its events."
+              : "No devices have been registered yet. Ask an operator or admin to add one."
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[920px] text-sm">
+          <table className="w-full min-w-[1080px] text-sm">
             <thead className="border-b border-border bg-secondary/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th scope="col" className="px-6 py-3">Device</th>
                 <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="px-6 py-3">Armed</th>
                 <th scope="col" className="px-6 py-3">Location</th>
                 <th scope="col" className="px-6 py-3">Temperature</th>
                 <th scope="col" className="px-6 py-3">Battery</th>
@@ -156,6 +177,10 @@ export function DeviceTable() {
                   device.temperatureC !== null &&
                   (device.temperatureC >= THRESHOLDS.tempWarnHigh ||
                     device.temperatureC <= THRESHOLDS.tempWarnLow);
+                // Scope the in-flight state to this row so toggling one device
+                // does not disable every other row's Arm button.
+                const isArming =
+                  setArmed.isPending && setArmed.variables?.deviceId === device.id;
                 return (
                   <tr
                     key={device.id}
@@ -174,6 +199,9 @@ export function DeviceTable() {
                     </td>
                     <td className="px-6 py-4">
                       <StatusDot status={device.status} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <ArmedBadge armed={device.armed} />
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
                       {device.location ?? NO_VALUE}
@@ -241,18 +269,45 @@ export function DeviceTable() {
                     <td className="whitespace-nowrap px-6 py-4 text-xs text-muted-foreground">
                       {device.lastSeen ? <RelativeTime date={device.lastSeen} /> : "never"}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteCandidate(device)}
-                        disabled={remove.isPending}
-                        aria-label={`Remove ${device.name}`}
-                        aria-haspopup="dialog"
-                        className="text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </Button>
+                    <td className="px-6 py-4">
+                      {canManageDevices ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant={device.armed ? "outline" : "default"}
+                            onClick={() =>
+                              setArmed.mutate({ deviceId: device.id, armed: !device.armed })
+                            }
+                            disabled={isArming}
+                            aria-label={device.armed ? `Disarm ${device.name}` : `Arm ${device.name}`}
+                            // Fixed min-width keeps the button footprint constant across the
+                            // Arm / Disarm / Working label swap so the column never reflows.
+                            className="min-w-[7rem]"
+                          >
+                            {device.armed ? (
+                              <ShieldOff aria-hidden="true" />
+                            ) : (
+                              <ShieldCheck aria-hidden="true" />
+                            )}
+                            {isArming ? "Working" : device.armed ? "Disarm" : "Arm"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteCandidate(device)}
+                            disabled={remove.isPending}
+                            aria-label={`Remove ${device.name}`}
+                            aria-haspopup="dialog"
+                            className="text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+                          >
+                            <Trash2 aria-hidden="true" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="flex justify-end text-xs text-muted-foreground">
+                          Read-only role
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );

@@ -5,6 +5,7 @@ import { connectDb } from "@/lib/db";
 import { errorResponse, fromZod } from "@/lib/error-envelope";
 import { isSameOrigin } from "@/lib/origin-guard";
 import { hashDeviceToken } from "@/lib/password";
+import { canManageDevices } from "@/lib/roles";
 import { deviceCreateSchema } from "@/lib/validation/device";
 import { Device } from "@/models/Device";
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) {
     return errorResponse("unauthorized", "Sign in required.", 401);
   }
-  if (session.user.role === "USER") {
+  if (!canManageDevices(session.user.role)) {
     return errorResponse(
       "forbidden",
       "Only OPERATOR or ADMIN may register devices.",

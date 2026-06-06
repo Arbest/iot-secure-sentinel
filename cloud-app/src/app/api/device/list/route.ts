@@ -5,6 +5,8 @@ import { effectiveDeviceStatus, ensureOfflineTamperAlarms } from "@/lib/device-s
 import { errorResponse } from "@/lib/error-envelope";
 import { Device } from "@/models/Device";
 import { Event } from "@/models/Event";
+import type { DeviceListItem } from "@/types/device";
+import type { DeviceType } from "@/lib/validation/device";
 
 export const runtime = "nodejs";
 
@@ -20,6 +22,10 @@ type LatestInfraGrid = {
   timestamp: Date;
 };
 
+function toIso(value: Date | null | undefined): string | null {
+  return value ? new Date(value).toISOString() : null;
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -30,7 +36,7 @@ export async function GET() {
   await ensureOfflineTamperAlarms();
   const devices = await Device.find()
     .select(
-      "name type status location lastSeen lastSeenAt lastHeartbeatAt lastOfflineAt firmwareVersion batteryVoltage",
+      "name type status armed location lastSeen lastSeenAt lastHeartbeatAt lastOfflineAt firmwareVersion batteryVoltage",
     )
     .sort({ name: 1 })
     .lean();
@@ -73,27 +79,28 @@ export async function GET() {
   ]);
   const infraGridMap = new Map(latestInfraGrids.map((t) => [String(t._id), t]));
 
-  return NextResponse.json({
-    items: devices.map((d) => {
-      const latestTemperature = temperatureMap.get(String(d._id));
-      const latestInfraGrid = infraGridMap.get(String(d._id));
-      return {
-        id: String(d._id),
-        name: d.name,
-        type: d.type,
-        status: effectiveDeviceStatus(d),
-        location: d.location ?? null,
-        lastSeen: d.lastSeenAt ?? d.lastSeen ?? null,
-        lastSeenAt: d.lastSeenAt ?? null,
-        lastHeartbeatAt: d.lastHeartbeatAt ?? null,
-        lastOfflineAt: d.lastOfflineAt ?? null,
-        firmwareVersion: d.firmwareVersion ?? null,
-        batteryVoltage: d.batteryVoltage ?? null,
-        temperatureC: latestTemperature?.value ?? null,
-        temperatureAt: latestTemperature?.timestamp ?? null,
-        infraGrid: latestInfraGrid?.matrix ?? null,
-        infraGridAt: latestInfraGrid?.timestamp ?? null,
-      };
-    }),
+  const items: DeviceListItem[] = devices.map((d) => {
+    const latestTemperature = temperatureMap.get(String(d._id));
+    const latestInfraGrid = infraGridMap.get(String(d._id));
+    return {
+      id: String(d._id),
+      name: d.name,
+      type: d.type as DeviceType,
+      status: effectiveDeviceStatus(d),
+      armed: d.armed ?? false,
+      location: d.location ?? null,
+      lastSeen: toIso(d.lastSeenAt ?? d.lastSeen),
+      lastSeenAt: toIso(d.lastSeenAt),
+      lastHeartbeatAt: toIso(d.lastHeartbeatAt),
+      lastOfflineAt: toIso(d.lastOfflineAt),
+      firmwareVersion: d.firmwareVersion ?? null,
+      batteryVoltage: d.batteryVoltage ?? null,
+      temperatureC: latestTemperature?.value ?? null,
+      temperatureAt: toIso(latestTemperature?.timestamp),
+      infraGrid: latestInfraGrid?.matrix ?? null,
+      infraGridAt: toIso(latestInfraGrid?.timestamp),
+    };
   });
+
+  return NextResponse.json({ items });
 }

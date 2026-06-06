@@ -65,6 +65,7 @@ describe("GET /api/cron/tick", () => {
       name: "stale-gateway",
       type: "gateway",
       status: "online",
+      armed: true,
       lastSeen: new Date(Date.now() - 5 * 60 * 1000),
       apiTokenHash: hashDeviceToken("token"),
     });
@@ -99,6 +100,7 @@ describe("GET /api/cron/tick", () => {
       name: "offline-gateway",
       type: "gateway",
       status: "offline",
+      armed: true,
       lastSeen: new Date(Date.now() - 10 * 60 * 1000),
       apiTokenHash: hashDeviceToken("token"),
     });
@@ -122,6 +124,7 @@ describe("GET /api/cron/tick", () => {
       name: "offline-gateway",
       type: "gateway",
       status: "offline",
+      armed: true,
       lastSeen: new Date(Date.now() - 10 * 60 * 1000),
       apiTokenHash: hashDeviceToken("token"),
     });
