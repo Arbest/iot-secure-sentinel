@@ -1,9 +1,10 @@
 import { Schema, Types, model, models, type Model, type InferSchemaType } from "mongoose";
+import { deviceTypeEnum } from "@/lib/validation/device";
 
 const deviceSchema = new Schema(
   {
     name: { type: String, required: true, unique: true, maxlength: 120 },
-    type: { type: String, enum: ["iotNode", "gateway"], required: true },
+    type: { type: String, enum: deviceTypeEnum.options, required: true },
     status: {
       type: String,
       enum: ["online", "warning", "offline"],

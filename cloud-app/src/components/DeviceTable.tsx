@@ -1,16 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { BatteryLow, Cpu, Router, ServerCrash, Thermometer, Flame } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  BatteryLow,
+  Cpu,
+  Flame,
+  Plus,
+  Router,
+  ServerCrash,
+  Thermometer,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { ConfirmDeleteDeviceDialog } from "@/components/ConfirmDeleteDeviceDialog";
 import { DevicesSkeleton } from "@/components/DevicesSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { PollIndicator } from "@/components/PollIndicator";
+import { RegisterDeviceModal } from "@/components/RegisterDeviceModal";
 import { RelativeTime } from "@/components/RelativeTime";
 import { StatusDot } from "@/components/StatusDot";
+import { Button } from "@/components/ui/button";
 import { IconMedallion } from "@/components/ui/IconMedallion";
 import { ThermalCameraModal } from "@/components/ThermalCameraModal";
 import { cn } from "@/lib/utils";
+import { extractUuAppErrorMessage } from "@/lib/uu-error";
+import { type DeviceType } from "@/lib/validation/device";
 import { THRESHOLDS } from "@/services/alarm-classifier";
 
 const POLL_INTERVAL_SECONDS = 10;
@@ -18,7 +33,7 @@ const POLL_INTERVAL_SECONDS = 10;
 type DeviceRow = {
   id: string;
   name: string;
-  type: "iotNode" | "gateway";
+  type: DeviceType;
   status: "online" | "warning" | "offline";
   location: string | null;
   lastSeen: string | null;
@@ -39,12 +54,41 @@ async function fetchDevices(): Promise<DeviceRow[]> {
   return data.items;
 }
 
+async function deleteDevice(deviceId: string): Promise<void> {
+  const res = await fetch("/api/device/delete", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ deviceId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const message = extractUuAppErrorMessage(body) ?? "Failed to remove device.";
+    throw new Error(message);
+  }
+}
+
 export function DeviceTable() {
+  const queryClient = useQueryClient();
   const [selectedDevice, setSelectedDevice] = useState<DeviceRow | null>(null);
+  const [showRegister, setShowRegister] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState<DeviceRow | null>(null);
+
   const query = useQuery({
     queryKey: ["devices"],
     queryFn: fetchDevices,
     refetchInterval: POLL_INTERVAL_SECONDS * 1000,
+  });
+
+  const remove = useMutation({
+    mutationFn: deleteDevice,
+    onSuccess: () => {
+      toast.success("Device removed.");
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      setDeleteCandidate(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   const items = query.data ?? [];
@@ -64,23 +108,29 @@ export function DeviceTable() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span className="tabular-nums">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground tabular-nums">
           {items.length} {items.length === 1 ? "device" : "devices"} registered
         </span>
-        <PollIndicator
-          intervalSeconds={POLL_INTERVAL_SECONDS}
-          lastUpdated={query.dataUpdatedAt}
-          isFetching={query.isFetching}
-          isError={query.isError}
-        />
+        <div className="flex items-center gap-3">
+          <PollIndicator
+            intervalSeconds={POLL_INTERVAL_SECONDS}
+            lastUpdated={query.dataUpdatedAt}
+            isFetching={query.isFetching}
+            isError={query.isError}
+          />
+          <Button size="sm" onClick={() => setShowRegister(true)}>
+            <Plus aria-hidden="true" />
+            Register device
+          </Button>
+        </div>
       </div>
 
       {items.length === 0 ? (
         <EmptyState
           icon={Cpu}
           title="No devices registered yet"
-          description="Once a gateway or sensor node authenticates, it will appear here."
+          description="Register a device with the button above to start receiving its events."
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
@@ -93,7 +143,8 @@ export function DeviceTable() {
                 <th scope="col" className="px-6 py-3">Temperature</th>
                 <th scope="col" className="px-6 py-3">Battery</th>
                 <th scope="col" className="px-6 py-3">Firmware</th>
-                <th scope="col" className="px-6 py-3">Last seen</th>
+                <th scope="col" className="w-44 px-6 py-3">Last seen</th>
+                <th scope="col" className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -166,15 +217,18 @@ export function DeviceTable() {
                     <td className="px-6 py-4 tabular-nums">
                       {device.batteryVoltage !== null ? (
                         <span
-                          className={
-                            lowBattery
-                              ? "inline-flex items-center gap-1 text-warning"
-                              : "text-foreground"
-                          }
+                          className={cn(
+                            "inline-flex items-center gap-1",
+                            lowBattery ? "text-warning" : "text-foreground",
+                          )}
                         >
-                          {lowBattery ? (
-                            <BatteryLow className="h-4 w-4" aria-hidden="true" />
-                          ) : null}
+                          {/* Icon slot is always present (invisible when healthy) so a
+                              low-battery transition doesn't shift the voltage or reflow
+                              the column; voltages stay aligned across rows. */}
+                          <BatteryLow
+                            className={cn("h-4 w-4", !lowBattery && "invisible")}
+                            aria-hidden="true"
+                          />
                           {device.batteryVoltage.toFixed(2)} V
                         </span>
                       ) : (
@@ -184,8 +238,21 @@ export function DeviceTable() {
                     <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                       {device.firmwareVersion ?? NO_VALUE}
                     </td>
-                    <td className="px-6 py-4 text-xs text-muted-foreground">
+                    <td className="whitespace-nowrap px-6 py-4 text-xs text-muted-foreground">
                       {device.lastSeen ? <RelativeTime date={device.lastSeen} /> : "never"}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteCandidate(device)}
+                        disabled={remove.isPending}
+                        aria-label={`Remove ${device.name}`}
+                        aria-haspopup="dialog"
+                        className="text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+                      >
+                        <Trash2 aria-hidden="true" />
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -200,6 +267,19 @@ export function DeviceTable() {
           matrix={activeDeviceForCamera.infraGrid}
           timestamp={activeDeviceForCamera.infraGridAt}
           onClose={() => setSelectedDevice(null)}
+        />
+      )}
+      {showRegister && <RegisterDeviceModal onClose={() => setShowRegister(false)} />}
+      {deleteCandidate && (
+        <ConfirmDeleteDeviceDialog
+          deviceName={deleteCandidate.name}
+          // Scope spinner to the row currently being deleted so an unrelated
+          // confirm dialog (opened while a previous delete is in flight) does
+          // not render in a half-loaded state. Mirrors AlarmTable's
+          // `ack.variables === alarm.id` idiom.
+          isLoading={remove.isPending && remove.variables === deleteCandidate.id}
+          onConfirm={() => remove.mutate(deleteCandidate.id)}
+          onCancel={() => setDeleteCandidate(null)}
         />
       )}
     </div>
