@@ -227,7 +227,7 @@ export function AlarmTable({ canAcknowledge }: { canAcknowledge: boolean }) {
                 <th scope="col" className="px-6 py-3">Device</th>
                 <th scope="col" className="px-6 py-3">Category</th>
                 <th scope="col" className="px-6 py-3">Message</th>
-                <th scope="col" className="px-6 py-3">When</th>
+                <th scope="col" className="w-44 px-6 py-3">When</th>
                 <th scope="col" className="px-6 py-3 text-right">Action</th>
               </tr>
             </thead>
@@ -253,7 +253,7 @@ export function AlarmTable({ canAcknowledge }: { canAcknowledge: boolean }) {
                   <td className="px-6 py-4" title={alarm.message}>
                     {alarm.message}
                   </td>
-                  <td className="px-6 py-4 text-xs text-muted-foreground">
+                  <td className="whitespace-nowrap px-6 py-4 text-xs text-muted-foreground">
                     <RelativeTime date={alarm.createdAt} />
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -263,9 +263,13 @@ export function AlarmTable({ canAcknowledge }: { canAcknowledge: boolean }) {
                         variant={alarm.severity === "critical" ? "default" : "outline"}
                         onClick={() => ack.mutate(alarm.id)}
                         disabled={ack.isPending}
+                        // Fixed min-width keeps the button footprint constant across the
+                        // "Acknowledge" -> "Working" label swap, so the auto-layout table
+                        // column never reflows (no whole-layout jitter on click).
+                        className="min-w-[8rem]"
                       >
                         <Check />
-                        {ack.isPending ? "Working" : "Acknowledge"}
+                        {ack.isPending && ack.variables === alarm.id ? "Working" : "Acknowledge"}
                       </Button>
                     ) : (
                       <span className="text-xs text-muted-foreground">Read-only role</span>

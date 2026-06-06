@@ -42,7 +42,11 @@ export function StatusDot({
           )}
         />
       </span>
-      {showLabel ? <span className={cn("capitalize", style.label)}>{status}</span> : null}
+      {showLabel ? (
+        // min-width reserves room for the widest status word so a status change
+        // (online <-> offline <-> warning) never reflows the table column.
+        <span className={cn("min-w-[3.75rem] capitalize", style.label)}>{status}</span>
+      ) : null}
     </span>
   );
 }

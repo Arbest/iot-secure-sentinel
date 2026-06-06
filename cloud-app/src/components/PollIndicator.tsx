@@ -47,7 +47,10 @@ export function PollIndicator({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 text-xs tabular-nums",
+        // justify-end + min-width pins the content to the right edge so the
+        // per-second label width changes ("Updated just now" <-> "Updated Ns ago")
+        // are absorbed by left-side slack instead of jittering the layout.
+        "inline-flex min-w-[9rem] items-center justify-end gap-1.5 text-xs tabular-nums",
         tone === "warning" ? "text-warning" : "text-muted-foreground",
         className,
       )}
