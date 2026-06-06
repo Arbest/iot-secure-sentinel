@@ -155,24 +155,24 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
           {/*
-            Per-column widths sum to ~1320px. Without them the table flexes every
-            column to natural content width, which collapses "iris-gateway-prod"
-            into a three-line wrap and makes the leading icon look undersized.
-            Explicit widths reserve room for the widest expected content per
-            column so a single device row stays one line.
+            table-fixed locks each column to the width declared on its <th> so
+            row-level content changes (Arm <-> Disarm, refreshed RelativeTime,
+            Working spinner swap) cannot reflow the column or push the whole
+            row sideways. Sum of declared column widths is approx 1576px; the
+            container scrolls horizontally below that breakpoint.
           */}
-          <table className="w-full min-w-[1320px] text-sm">
+          <table className="w-full min-w-[1576px] table-fixed text-sm">
             <thead className="border-b border-border bg-secondary/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th scope="col" className="w-[260px] px-6 py-3">Device</th>
                 <th scope="col" className="w-[120px] px-6 py-3">Status</th>
                 <th scope="col" className="w-[130px] px-6 py-3">Armed</th>
                 <th scope="col" className="w-[150px] px-6 py-3">Location</th>
-                <th scope="col" className="w-[170px] px-6 py-3">Temperature</th>
+                <th scope="col" className="w-[280px] px-6 py-3">Temperature</th>
                 <th scope="col" className="w-[110px] px-6 py-3">Battery</th>
                 <th scope="col" className="w-[140px] px-6 py-3">Firmware</th>
                 <th scope="col" className="w-44 px-6 py-3">Last seen</th>
-                <th scope="col" className="w-[200px] px-6 py-3 text-right">Actions</th>
+                <th scope="col" className="w-[210px] px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -193,15 +193,11 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                     key={device.id}
                     className="border-t border-border transition-colors first:border-t-0 hover:bg-secondary/40"
                   >
-                    <td className="px-6 py-4">
+                    <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-3">
                         <IconMedallion icon={Icon} tone="primary" size="md" />
-                        {/* min-w-0 lets the truncating child shrink within the flex parent;
-                            without it the inner div keeps its natural width and overflows. */}
-                        <div className="min-w-0">
-                          <div className="truncate font-medium" title={device.name}>
-                            {device.name}
-                          </div>
+                        <div>
+                          <div className="font-medium">{device.name}</div>
                           <div className="text-xs capitalize text-muted-foreground">
                             {device.type === "iotNode" ? "IoT node" : "Gateway"}
                           </div>
@@ -217,9 +213,9 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                     <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
                       {device.location ?? NO_VALUE}
                     </td>
-                    <td className="px-6 py-4 tabular-nums">
+                    <td className="whitespace-nowrap px-6 py-4 tabular-nums">
                       {device.temperatureC !== null || device.infraGrid ? (
-                        <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
                           {device.temperatureC !== null ? (
                             <span
                               className={cn(
@@ -237,7 +233,7 @@ export function DeviceTable({ canManageDevices }: { canManageDevices: boolean })
                               onClick={() => setSelectedDevice(device)}
                               aria-label={`Open thermal camera for ${device.name}`}
                               aria-haspopup="dialog"
-                              className="inline-flex items-center gap-1 rounded border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-max"
+                              className="inline-flex items-center gap-1 rounded border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               <Flame className="h-3 w-3 text-warning" aria-hidden="true" />
                               Thermal
