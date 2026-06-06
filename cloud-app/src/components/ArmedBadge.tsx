@@ -10,7 +10,9 @@ export function ArmedBadge({ armed, className }: { armed: boolean; className?: s
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
+        // min-w reserves room for the widest label ("Disarmed" + icon) so an arm/disarm
+        // transition does not shrink the badge and reflow the table column.
+        "inline-flex min-w-[5.5rem] items-center justify-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
         armed
           ? "bg-success-soft text-success ring-success/30"
           : "bg-secondary text-muted-foreground ring-border",
