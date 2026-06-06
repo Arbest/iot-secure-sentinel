@@ -43,7 +43,7 @@ export function DashboardOverview({
     ? gateway.status === "online"
       ? "Online"
       : "Offline"
-    : "—";
+    : "-";
   const gatewaySubtitle = gateway
     ? gateway.lastSeenSeconds != null
       ? `${gateway.name}, ${formatLastSeen(gateway.lastSeenSeconds)}`
@@ -132,7 +132,7 @@ export function DashboardOverview({
         <StatCard
           title="Temperature"
           icon={Thermometer}
-          value={counts.latestTemperature ? `${counts.latestTemperature.value.toFixed(1)} °C` : "—"}
+          value={counts.latestTemperature ? `${counts.latestTemperature.value.toFixed(1)} °C` : "-"}
           subtitle={counts.latestTemperature?.deviceName ?? "No reading yet"}
           tone={temperatureWarning ? "warning" : "neutral"}
           href="/devices"

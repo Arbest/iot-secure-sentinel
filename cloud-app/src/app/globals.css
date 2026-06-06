@@ -103,12 +103,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Iris gradient mesh on the auth screen. Always rendered on a dark backdrop, no per-theme variant. */
+/* Iris gradient mesh on the auth screen. Always rendered on a dark backdrop, no per-theme variant.
+   Hue mix breaks the saturated AI purple-to-blue diagonal: violet primary + cyan accent + deep
+   iris pool, so the signature is the Iris palette, not the generic "purple gradient" reflex. */
 .iris-mesh {
   background:
     radial-gradient(at 20% 20%, hsl(263 90% 60% / 0.35) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsl(290 85% 60% / 0.25) 0px, transparent 55%),
-    radial-gradient(at 0% 100%, hsl(220 90% 55% / 0.30) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(190 85% 55% / 0.22) 0px, transparent 55%),
+    radial-gradient(at 0% 100%, hsl(220 90% 55% / 0.28) 0px, transparent 50%),
     radial-gradient(at 80% 80%, hsl(263 70% 30% / 0.40) 0px, transparent 60%),
     linear-gradient(135deg, hsl(263 50% 18%) 0%, hsl(255 50% 10%) 100%);
 }
