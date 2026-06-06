@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { X, Flame, Maximize2, Compass, Layers, Sliders } from "lucide-react";
+import { X, Flame, Maximize2, Compass, Layers, Sliders, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatSecondsAgo, secondsSince } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+// HW posts thermal frames roughly every 5s. A frame older than 90s (18x the
+// expected cadence) means the feed has paused. We surface that in the modal
+// so operators do not mistake a stale frame for live data.
+const THERMAL_STALE_THRESHOLD_SECONDS = 90;
 
 interface ThermalCameraModalProps {
   deviceName: string;
@@ -87,6 +93,9 @@ export function ThermalCameraModal({
   const [showExtremes, setShowExtremes] = useState<boolean>(true);
   const [palette, setPalette] = useState<string>("ironbow");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // Re-evaluate frame freshness once per second so the "5s ago" / "2m ago"
+  // label and the warning tone update without depending on the parent poll.
+  const [nowMs, setNowMs] = useState<number | null>(null);
 
   // Close on ESC key press
   useEffect(() => {
@@ -96,6 +105,15 @@ export function ThermalCameraModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  useEffect(() => {
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const ageSeconds = nowMs != null ? secondsSince(timestamp, nowMs) : null;
+  const isStale = ageSeconds != null && ageSeconds > THERMAL_STALE_THRESHOLD_SECONDS;
 
   // Compute metrics from matrix
   const stats = useMemo(() => {
@@ -274,12 +292,35 @@ export function ThermalCameraModal({
               </Button>
             </div>
 
-            {/* Timestamp */}
-            <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-              <span>Captured:</span>
-              <span className="font-mono text-foreground">
+            {/* Timestamp + freshness. Time is exact so the operator can correlate
+                with logs; the relative age + warning tone tells them at a glance
+                whether the frame is live or the feed has paused. */}
+            <div
+              className={cn(
+                "mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs",
+                isStale ? "text-warning" : "text-muted-foreground",
+              )}
+            >
+              <span className="inline-flex items-center gap-1">
+                {isStale ? (
+                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : null}
+                Captured:
+              </span>
+              <span
+                className={cn(
+                  "font-mono",
+                  isStale ? "text-warning" : "text-foreground",
+                )}
+              >
                 {timestamp ? new Date(timestamp).toLocaleTimeString() : "Unknown"}
               </span>
+              {ageSeconds != null ? (
+                <span className="tabular-nums">
+                  ({isStale ? "stale, " : ""}
+                  {formatSecondsAgo(ageSeconds).toLowerCase().replace("updated ", "")})
+                </span>
+              ) : null}
             </div>
 
             <hr className="my-4 border-border" />

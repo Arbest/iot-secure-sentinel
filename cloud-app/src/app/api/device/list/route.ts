@@ -9,6 +9,12 @@ import type { DeviceListItem } from "@/types/device";
 import type { DeviceType } from "@/lib/validation/device";
 
 export const runtime = "nodejs";
+// Next 15 App Router will static-optimize a route that only reads session +
+// data unless you opt out. The Devices view polls every 10s; without this the
+// edge/serverless cache can serve a snapshot while fresh telemetry sits in
+// Mongo. force-dynamic guarantees the handler runs on every request.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type LatestReading = {
   _id: unknown;

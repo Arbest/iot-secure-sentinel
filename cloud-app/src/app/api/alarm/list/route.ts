@@ -7,6 +7,10 @@ import { Alarm } from "@/models/Alarm";
 import { Device } from "@/models/Device";
 
 export const runtime = "nodejs";
+// Alarms page polls every 5s. force-dynamic so a stale alarm snapshot is never
+// served from cache while a critical alarm just landed in Mongo.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const session = await auth();

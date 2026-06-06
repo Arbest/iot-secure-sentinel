@@ -35,6 +35,22 @@ export function formatAbsolute(date: Date | string | number): string {
 }
 
 /**
+ * Seconds elapsed since `timestamp`, clamped at zero. Returns `null` for
+ * missing/unparseable inputs so callers can distinguish "no data yet" from
+ * "data exists but is fresh". Pass `now` to keep results stable across a
+ * render or to inject a fixed clock in tests.
+ */
+export function secondsSince(
+  timestamp: string | Date | number | null | undefined,
+  now: number = Date.now(),
+): number | null {
+  if (timestamp == null) return null;
+  const ms = timestamp instanceof Date ? timestamp.getTime() : new Date(timestamp).getTime();
+  if (Number.isNaN(ms)) return null;
+  return Math.max(0, (now - ms) / 1000);
+}
+
+/**
  * Short freshness label for polled UI: "Updated just now", "Updated 12s ago",
  * "Updated 5m ago", "Updated 2h ago". Caller passes a non-negative second count.
  */
